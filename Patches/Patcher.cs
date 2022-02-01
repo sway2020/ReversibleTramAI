@@ -246,4 +246,15 @@ namespace ReversibleTramAI
             return Mathf.Sqrt(Mathf.Max(0f, num2 * num2 + 2f * targetDistance * maxBraking)) - num;
         }
     }
+
+
+    [HarmonyPatch(typeof(Notification), "AddProblems")]
+    public static class AddProblemsPatch
+    {
+        public static bool Prefix(ref Notification.Problem problems1, ref Notification.Problem problems2)
+        {
+            if (problems2 == Notification.Problem.TrackNotConnected) return false;
+            return true;
+        }
+    }
 }
