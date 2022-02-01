@@ -1054,6 +1054,31 @@ namespace ReversibleTramAI
             }
         }
 
+        /// <summary>
+        /// Modified from vanilla tramBaseAI
+        /// </summary>
+        public override void FrameDataUpdated(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData)
+        {
+            Vector3 vector = frameData.m_position + frameData.m_velocity * 0.5f;
+            Vector3 vector2 = frameData.m_rotation * new Vector3(0f, 0f, Mathf.Max(0.5f, m_info.m_generatedInfo.m_size.z * 0.5f - 1f));
+
+            bool reversedFlag = (vehicleData.m_flags & Vehicle.Flags.Reversed) != 0;
+
+            if (!reversedFlag)
+            {
+                vehicleData.m_segment.a = vector - vector2;
+                vehicleData.m_segment.b = vector + vector2;
+            }
+
+            // NON-STOCK CODE START
+            else
+            {
+                vehicleData.m_segment.a = vector + vector2;
+                vehicleData.m_segment.b = vector - vector2;
+            }
+            // NON-STOCK CODE END
+        }
+
 
 
         /*                                                     */
@@ -1107,14 +1132,6 @@ namespace ReversibleTramAI
         protected virtual void PathfindFailure(ushort vehicleID, ref Vehicle data)
         {
             data.Unspawn(vehicleID);
-        }
-
-        public override void FrameDataUpdated(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData)
-        {
-            Vector3 vector = frameData.m_position + frameData.m_velocity * 0.5f;
-            Vector3 vector2 = frameData.m_rotation * new Vector3(0f, 0f, Mathf.Max(0.5f, m_info.m_generatedInfo.m_size.z * 0.5f - 1f));
-            vehicleData.m_segment.a = vector - vector2;
-            vehicleData.m_segment.b = vector + vector2;
         }
 
         private static bool CheckOverlap(ushort vehicleID, ref Vehicle vehicleData, Segment3 segment, ushort ignoreVehicle)
