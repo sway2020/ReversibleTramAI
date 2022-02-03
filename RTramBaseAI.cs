@@ -305,7 +305,13 @@ namespace ReversibleTramAI
             }
             else
             {
-                float num12 = (magnitude + acceleration) * (0.5f + 0.5f * (magnitude + acceleration) / braking);
+                // Non-stock code START
+
+                float num12 = (magnitude + acceleration) * (0.5f + 0.5f * (magnitude + acceleration) / braking) + (m_info.m_generatedInfo.m_size.z - m_info.m_generatedInfo.m_wheelBase) * 0.5f;
+                // float num12 = (magnitude + acceleration) * (0.5f + 0.5f * (magnitude + acceleration) / braking);
+
+                // Non-stock code END
+
                 float num13 = Mathf.Max(magnitude + acceleration, 2f);
                 float num14 = Mathf.Max((num12 - num13) / 2f, 1f);
                 float num15 = num13 * num13;
@@ -941,7 +947,7 @@ namespace ReversibleTramAI
         }
 
         /// <summary>
-        /// Taken from vanilla train AI, unchanged
+        /// Modified from vanilla train AI
         /// </summary>
         private void CheckNextLane(ushort vehicleID, ref Vehicle vehicleData, ref float maxSpeed, PathUnit.Position position, uint laneID, byte offset, PathUnit.Position prevPos, uint prevLaneID, byte prevOffset, Bezier3 bezier)
         {
@@ -966,92 +972,12 @@ namespace ReversibleTramAI
                 maxSpeed = 0f;
                 return;
             }
-            //Vector3 vector2 = bezier.Position(0.5f);
-            //Segment3 segment = ((!(Vector3.SqrMagnitude(vehicleData.m_segment.a - vector2) < Vector3.SqrMagnitude(bezier.a - vector2))) ? new Segment3(bezier.a, vector2) : new Segment3(vehicleData.m_segment.a, vector2));
-            //if (segment.LengthSqr() >= 3f)
-            //{
-            //    segment.a += (segment.b - segment.a).normalized * 2.5f;
-            //    if (CheckOverlap(vehicleID, ref vehicleData, segment, vehicleID))
-            //    {
-            //        vehicleData.m_flags2 |= Vehicle.Flags2.Yielding;
-            //        vehicleData.m_waitCounter = 0;
-            //        maxSpeed = 0f;
-            //        return;
-            //    }
-            //}
-            //segment = new Segment3(vector2, bezier.d);
-            //if (segment.LengthSqr() >= 1f && CheckOverlap(vehicleID, ref vehicleData, segment, vehicleID))
-            //{
-            //    vehicleData.m_flags2 |= Vehicle.Flags2.Yielding;
-            //    vehicleData.m_waitCounter = 0;
-            //    maxSpeed = 0f;
-            //}
-            //else
-            //{
-            //    if (m_info.m_vehicleType == VehicleInfo.VehicleType.Monorail)
-            //    {
-            //        return;
-            //    }
-            //    ushort num2 = ((offset >= position.m_offset) ? instance.m_segments.m_buffer[position.m_segment].m_endNode : instance.m_segments.m_buffer[position.m_segment].m_startNode);
-            //    ushort num3 = ((prevOffset != 0) ? instance.m_segments.m_buffer[prevPos.m_segment].m_endNode : instance.m_segments.m_buffer[prevPos.m_segment].m_startNode);
-            //    if (num2 != num3)
-            //    {
-            //        return;
-            //    }
-            //    NetNode.Flags flags = instance.m_nodes.m_buffer[num2].m_flags;
-            //    NetLane.Flags flags2 = (NetLane.Flags)instance.m_lanes.m_buffer[prevLaneID].m_flags;
-            //    bool flag = (flags & NetNode.Flags.TrafficLights) != 0;
-            //    bool flag2 = (flags2 & (NetLane.Flags.YieldStart | NetLane.Flags.YieldEnd)) != 0 && (flags & (NetNode.Flags.Junction | NetNode.Flags.TrafficLights | NetNode.Flags.OneWayIn)) == NetNode.Flags.Junction;
-            //    if (flag)
-            //    {
-            //        uint currentFrameIndex = Singleton<SimulationManager>.instance.m_currentFrameIndex;
-            //        uint num4 = (uint)(num3 << 8) / 32768u;
-            //        uint num5 = (currentFrameIndex - num4) & 0xFFu;
-            //        RoadBaseAI.GetTrafficLightState(num3, ref instance.m_segments.m_buffer[prevPos.m_segment], currentFrameIndex - num4, out var vehicleLightState, out var pedestrianLightState, out var vehicles, out var pedestrians);
-            //        if (!vehicles && num5 >= 196)
-            //        {
-            //            vehicles = true;
-            //            RoadBaseAI.SetTrafficLightState(num3, ref instance.m_segments.m_buffer[prevPos.m_segment], currentFrameIndex - num4, vehicleLightState, pedestrianLightState, vehicles, pedestrians);
-            //        }
-            //        switch (vehicleLightState)
-            //        {
-            //            case RoadBaseAI.TrafficLightState.RedToGreen:
-            //                if (num5 < 60)
-            //                {
-            //                    vehicleData.m_flags2 |= Vehicle.Flags2.Yielding;
-            //                    vehicleData.m_waitCounter = 0;
-            //                    maxSpeed = 0f;
-            //                    return;
-            //                }
-            //                break;
-            //            case RoadBaseAI.TrafficLightState.GreenToRed:
-            //                if (num5 >= 30)
-            //                {
-            //                    vehicleData.m_flags2 |= Vehicle.Flags2.Yielding;
-            //                    vehicleData.m_waitCounter = 0;
-            //                    maxSpeed = 0f;
-            //                    return;
-            //                }
-            //                break;
-            //            case RoadBaseAI.TrafficLightState.Red:
-            //                vehicleData.m_flags2 |= Vehicle.Flags2.Yielding;
-            //                vehicleData.m_waitCounter = 0;
-            //                maxSpeed = 0f;
-            //                return;
-            //        }
-            //    }
-            //    if (flag2 && (vehicleData.m_flags2 & Vehicle.Flags2.Yielding) != 0)
-            //    {
-            //        vehicleData.m_waitCounter = (byte)Mathf.Min(vehicleData.m_waitCounter + 1, 4);
-            //        if (vehicleData.m_waitCounter < 4)
-            //        {
-            //            maxSpeed = 0f;
-            //            return;
-            //        }
-            //        vehicleData.m_flags2 &= ~Vehicle.Flags2.Yielding;
-            //        vehicleData.m_waitCounter = 0;
-            //    }
-            //}
+
+            // 
+
+            // unneeded STOCK code removed
+
+            //
         }
 
         /// <summary>
