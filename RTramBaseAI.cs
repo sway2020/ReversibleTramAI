@@ -13,7 +13,7 @@ namespace ReversibleTramAI
         public TransportInfo m_transportInfo;
 
         /// <summary>
-        /// Modified from vanilla TramBaseAI
+        /// Modified from vanilla TramBaseAI. Transpiled by TMPE. BE CARERFUL
         /// </summary>
         public override void SimulationStep(ushort vehicleID, ref Vehicle data, Vector3 physicsLodRefPos)
         {
@@ -79,52 +79,27 @@ namespace ReversibleTramAI
                 }
             }
 
-            if (flag)
+
+            num = flag ? instance.m_vehicles.m_buffer[num].m_leadingVehicle : instance.m_vehicles.m_buffer[num].m_trailingVehicle;
+            int num2 = 0;
+            while (num != 0)
             {
-                num = instance.m_vehicles.m_buffer[num].m_leadingVehicle;
-                int num2 = 0;
-                while (num != 0)
+                info = instance.m_vehicles.m_buffer[num].Info;
+                info.m_vehicleAI.SimulationStep(num, ref instance.m_vehicles.m_buffer[num], vehicleID, ref data, 0);
+                if ((data.m_flags & (Vehicle.Flags.Created | Vehicle.Flags.Deleted)) != Vehicle.Flags.Created)
                 {
-                    info = instance.m_vehicles.m_buffer[num].Info;
-                    info.m_vehicleAI.SimulationStep(num, ref instance.m_vehicles.m_buffer[num], vehicleID, ref data, 0);
-                    if ((data.m_flags & (Vehicle.Flags.Created | Vehicle.Flags.Deleted)) != Vehicle.Flags.Created)
-                    {
-                        return;
-                    }
-                    num = instance.m_vehicles.m_buffer[num].m_leadingVehicle;
-                    if (++num2 > 16384)
-                    {
-                        CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
-                        break;
-                    }
+                    return;
+                }
+                num = flag ? instance.m_vehicles.m_buffer[num].m_leadingVehicle : instance.m_vehicles.m_buffer[num].m_trailingVehicle;
+                if (++num2 > 16384)
+                {
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                    break;
                 }
             }
-
 
             // NON-STOCK CODE END
 
-
-            // Code in the following else block is from the original TramBaseAI. The original AI doesn't have the above if block
-            else
-            {
-                num = instance.m_vehicles.m_buffer[num].m_trailingVehicle;
-                int num2 = 0;
-                while (num != 0)
-                {
-                    info = instance.m_vehicles.m_buffer[num].Info;
-                    info.m_vehicleAI.SimulationStep(num, ref instance.m_vehicles.m_buffer[num], vehicleID, ref data, 0);
-                    if ((data.m_flags & (Vehicle.Flags.Created | Vehicle.Flags.Deleted)) != Vehicle.Flags.Created)
-                    {
-                        return;
-                    }
-                    num = instance.m_vehicles.m_buffer[num].m_trailingVehicle;
-                    if (++num2 > 16384)
-                    {
-                        CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
-                        break;
-                    }
-                }
-            }
             if ((data.m_flags & (Vehicle.Flags.Spawned | Vehicle.Flags.WaitingPath | Vehicle.Flags.WaitingSpace | Vehicle.Flags.WaitingCargo)) == 0 || data.m_blockCounter == byte.MaxValue)
             {
                 Singleton<VehicleManager>.instance.ReleaseVehicle(vehicleID);
@@ -1150,6 +1125,9 @@ namespace ReversibleTramAI
             return otherData.m_nextGridVehicle;
         }
 
+        /// <summary>
+        /// TMPE has a prefix for this 
+        /// </summary>
         protected override void CalculateSegmentPosition(ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position nextPosition, PathUnit.Position position, uint laneID, byte offset, PathUnit.Position prevPos, uint prevLaneID, byte prevOffset, int index, out Vector3 pos, out Vector3 dir, out float maxSpeed)
         {
             NetManager instance = Singleton<NetManager>.instance;
@@ -1274,6 +1252,9 @@ namespace ReversibleTramAI
             }
         }
 
+        /// <summary>
+        /// TMPE has a prefix for this 
+        /// </summary>
         protected override void CalculateSegmentPosition(ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position position, uint laneID, byte offset, out Vector3 pos, out Vector3 dir, out float maxSpeed)
         {
             NetManager instance = Singleton<NetManager>.instance;
@@ -1351,6 +1332,9 @@ namespace ReversibleTramAI
             return StartPathFind(vehicleID, ref vehicleData, startPos, endPos, startBothWays: true, endBothWays: true);
         }
 
+        /// <summary>
+        /// TMPE has a prefix for this
+        /// </summary>
         protected bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)
         {
             VehicleInfo info = m_info;
