@@ -163,7 +163,14 @@ namespace ReversibleTramAI
                 position -= vector2;
             }
             float acceleration = m_info.m_acceleration;
-            float braking = m_info.m_braking;
+
+            // NON STOCK CODE START
+
+            float braking = m_info.m_braking * 0.3f;
+            //float braking = m_info.m_braking;
+
+            // NON STOCK CODE END
+
             float magnitude = frameData.m_velocity.magnitude;
             Vector3 vector3 = (Vector3)vehicleData.m_targetPos1 - vector;
             float num2 = vector3.sqrMagnitude;
