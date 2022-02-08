@@ -76,5 +76,31 @@ namespace ReversibleTramAI
             return ret;
         }
 
+        internal static List<CodeInstruction> ToCodeList(IEnumerable<CodeInstruction> instructions)
+        {
+            var originalCodes = new List<CodeInstruction>(instructions);
+            var codes = new List<CodeInstruction>(originalCodes);
+            return codes;
+        }
+
+        internal static bool IsSameInstruction(CodeInstruction a, CodeInstruction b, bool debug = false)
+        {
+            if (a.opcode == b.opcode)
+            {
+                if (a.operand == b.operand)
+                {
+                    return true;
+                }
+
+                // This special code is needed for some reason because the == operator doesn't work on System.Byte
+                return (a.operand is byte aByte && b.operand is byte bByte && aByte == bByte)
+                       || (a.operand is int aInt && b.operand is int bInt && aInt == bInt);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
     }
 }
