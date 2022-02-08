@@ -838,68 +838,6 @@ namespace ReversibleTramAI
         }
 
         /// <summary>
-        /// Taken from vanilla train AI. Unchanged
-        /// </summary>
-        private static void ResetTargets(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, bool pushPathPos)
-        {
-            Vehicle.Frame lastFrameData = vehicleData.GetLastFrameData();
-            VehicleInfo info = vehicleData.Info;
-            RTramBaseAI tramBaseAI = info.m_vehicleAI as RTramBaseAI;
-            Vector3 position = lastFrameData.m_position;
-            Vector3 position2 = lastFrameData.m_position;
-            Vector3 vector = lastFrameData.m_rotation * new Vector3(0f, 0f, info.m_generatedInfo.m_wheelBase * 0.5f);
-            if ((leaderData.m_flags & Vehicle.Flags.Reversed) != 0)
-            {
-                position -= vector;
-                position2 += vector;
-            }
-            else
-            {
-                position += vector;
-                position2 -= vector;
-            }
-            vehicleData.m_targetPos0 = position2;
-            vehicleData.m_targetPos0.w = 2f;
-            vehicleData.m_targetPos1 = position;
-            vehicleData.m_targetPos1.w = 2f;
-            vehicleData.m_targetPos2 = vehicleData.m_targetPos1;
-            vehicleData.m_targetPos3 = vehicleData.m_targetPos1;
-            if (vehicleData.m_path != 0)
-            {
-                PathManager instance = Singleton<PathManager>.instance;
-                int num = (vehicleData.m_pathPositionIndex >> 1) + 1;
-                uint num2 = vehicleData.m_path;
-                if (num >= instance.m_pathUnits.m_buffer[num2].m_positionCount)
-                {
-                    num = 0;
-                    num2 = instance.m_pathUnits.m_buffer[num2].m_nextPathUnit;
-                }
-                if (instance.m_pathUnits.m_buffer[vehicleData.m_path].GetPosition(vehicleData.m_pathPositionIndex >> 1, out var position3))
-                {
-                    uint laneID = PathManager.GetLaneID(position3);
-                    if (num2 != 0 && instance.m_pathUnits.m_buffer[num2].GetPosition(num, out var position4))
-                    {
-                        uint laneID2 = PathManager.GetLaneID(position4);
-                        if (laneID2 == laneID)
-                        {
-                            if (num2 != vehicleData.m_path)
-                            {
-                                instance.ReleaseFirstUnit(ref vehicleData.m_path);
-                            }
-                            vehicleData.m_pathPositionIndex = (byte)(num << 1);
-                        }
-                    }
-                    PathUnit.CalculatePathPositionOffset(laneID, position2, out vehicleData.m_lastPathOffset);
-                }
-            }
-            if (vehicleData.m_path != 0)
-            {
-                int index = 0;
-                tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, position2, position, 0, ref leaderData, ref index, 1, 4, 4f, 1f);
-            }
-        }
-
-        /// <summary>
         /// Taken from vanilla train AI, unchanged
         /// </summary>
         private static void Reverse(ushort leaderID, ref Vehicle leaderData)
@@ -1040,6 +978,65 @@ namespace ReversibleTramAI
         protected virtual void PathfindFailure(ushort vehicleID, ref Vehicle data)
         {
             data.Unspawn(vehicleID);
+        }
+
+        private static void ResetTargets(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, bool pushPathPos)
+        {
+            Vehicle.Frame lastFrameData = vehicleData.GetLastFrameData();
+            VehicleInfo info = vehicleData.Info;
+            RTramBaseAI tramBaseAI = info.m_vehicleAI as RTramBaseAI;
+            Vector3 position = lastFrameData.m_position;
+            Vector3 position2 = lastFrameData.m_position;
+            Vector3 vector = lastFrameData.m_rotation * new Vector3(0f, 0f, info.m_generatedInfo.m_wheelBase * 0.5f);
+            if ((leaderData.m_flags & Vehicle.Flags.Reversed) != 0)
+            {
+                position -= vector;
+                position2 += vector;
+            }
+            else
+            {
+                position += vector;
+                position2 -= vector;
+            }
+            vehicleData.m_targetPos0 = position2;
+            vehicleData.m_targetPos0.w = 2f;
+            vehicleData.m_targetPos1 = position;
+            vehicleData.m_targetPos1.w = 2f;
+            vehicleData.m_targetPos2 = vehicleData.m_targetPos1;
+            vehicleData.m_targetPos3 = vehicleData.m_targetPos1;
+            if (vehicleData.m_path != 0)
+            {
+                PathManager instance = Singleton<PathManager>.instance;
+                int num = (vehicleData.m_pathPositionIndex >> 1) + 1;
+                uint num2 = vehicleData.m_path;
+                if (num >= instance.m_pathUnits.m_buffer[num2].m_positionCount)
+                {
+                    num = 0;
+                    num2 = instance.m_pathUnits.m_buffer[num2].m_nextPathUnit;
+                }
+                if (instance.m_pathUnits.m_buffer[vehicleData.m_path].GetPosition(vehicleData.m_pathPositionIndex >> 1, out var position3))
+                {
+                    uint laneID = PathManager.GetLaneID(position3);
+                    if (num2 != 0 && instance.m_pathUnits.m_buffer[num2].GetPosition(num, out var position4))
+                    {
+                        uint laneID2 = PathManager.GetLaneID(position4);
+                        if (laneID2 == laneID)
+                        {
+                            if (num2 != vehicleData.m_path)
+                            {
+                                instance.ReleaseFirstUnit(ref vehicleData.m_path);
+                            }
+                            vehicleData.m_pathPositionIndex = (byte)(num << 1);
+                        }
+                    }
+                    PathUnit.CalculatePathPositionOffset(laneID, position2, out vehicleData.m_lastPathOffset);
+                }
+            }
+            if (vehicleData.m_path != 0)
+            {
+                int index = 0;
+                tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, position2, position, 0, ref leaderData, ref index, 1, 4, 4f, 1f);
+            }
         }
 
         private static bool CheckOverlap(ushort vehicleID, ref Vehicle vehicleData, Segment3 segment, ushort ignoreVehicle)
