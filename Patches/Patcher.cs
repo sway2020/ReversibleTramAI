@@ -1,8 +1,9 @@
 ﻿using HarmonyLib;
 using System.Reflection;
-using ColossalFramework;
-using ColossalFramework.Math;
 using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ReversibleTramAI
 {
@@ -16,7 +17,7 @@ namespace ReversibleTramAI
         {
             if (patched) return;
 
-            UnityEngine.Debug.Log("ReversibleTramAIMod: Patching...");
+            Debug.Log("ReversibleTramAIMod: Appying Harmony Patches...");
 
             patched = true;
 
@@ -34,18 +35,72 @@ namespace ReversibleTramAI
 
             patched = false;
 
-            UnityEngine.Debug.Log("ReversibleTramAIMod: Reverted...");
+            Debug.Log("ReversibleTramAIMod: Reverting Harmony Patches...");
         }
-    }
 
-    [HarmonyPatch(typeof(Notification), "AddProblems")]
-    public static class AddProblemsPatch
-    {
-        public static bool Prefix(ref Notification.Problem problems1, ref Notification.Problem problems2)
+
+        /* Taken from TMPE */
+
+        /// <summary>
+        /// Gets parameter types from delegate
+        /// </summary>
+        /// <typeparam name="TDelegate">delegate type</typeparam>
+        /// <param name="instance">skip first parameter. Default value is false.</param>
+        /// <returns>Type[] representing arguments of the delegate.</returns>
+        internal static Type[] GetParameterTypes<TDelegate>(bool instance = false) where TDelegate : Delegate
         {
-            if (problems2 == Notification.Problem.TrackNotConnected) return false;
-            return true;
-        }
-    }
+            IEnumerable<ParameterInfo> parameters = typeof(TDelegate).GetMethod("Invoke").GetParameters();
+            if (instance)
+            {
+                parameters = parameters.Skip(1);
+            }
 
+            return parameters.Select(p => p.ParameterType).ToArray();
+        }
+
+        /// <summary>
+        /// Gets directly declared method.
+        /// </summary>
+        /// <typeparam name="TDelegate">delegate that has the same argument types as the intented overloaded method</typeparam>
+        /// <param name="type">the class/type where the method is delcared</param>
+        /// <param name="name">the name of the method</param>
+        /// <param name="instance">is instance delegate (require skip if the first param)</param>
+        /// <returns>a method or null when type is null or when a method is not found</returns>
+        internal static MethodInfo DeclaredMethod<TDelegate>(Type type, string name, bool instance = false)
+            where TDelegate : Delegate
+        {
+            var args = GetParameterTypes<TDelegate>(instance);
+            var ret = AccessTools.DeclaredMethod(type, name, args);
+            if (ret == null)
+                Debug.Log($"ReversibleTramAIMod: failed to retrieve method {type}.{name}({args.ToString()})");
+            return ret;
+        }
+
+        internal static List<CodeInstruction> ToCodeList(IEnumerable<CodeInstruction> instructions)
+        {
+            var originalCodes = new List<CodeInstruction>(instructions);
+            var codes = new List<CodeInstruction>(originalCodes);
+            return codes;
+        }
+
+        internal static bool IsSameInstruction(CodeInstruction a, CodeInstruction b, bool debug = false)
+        {
+            if (a.opcode == b.opcode)
+            {
+                if (a.operand == b.operand)
+                {
+                    return true;
+                }
+
+                // This special code is needed for some reason because the == operator doesn't work on System.Byte
+                return (a.operand is byte aByte && b.operand is byte bByte && aByte == bByte)
+                       || (a.operand is int aInt && b.operand is int bInt && aInt == bInt);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+    }
 }

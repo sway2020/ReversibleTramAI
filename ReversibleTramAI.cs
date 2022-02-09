@@ -5,11 +5,11 @@ namespace ReversibleTramAI
 {
     public class Mod : IUserMod
     {
-        public const string version = "v0.1.1";
+        public const string version = "v0.3";
         public string Name => "Reversible Tram AI " + version;
         public string Description
         {
-            get { return "Provides a modified reversible Tram AI"; }
+            get { return "Modifies tram AI to allow reversible trams"; }
         }
 
         public void OnEnabled()
