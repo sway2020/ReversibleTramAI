@@ -5,7 +5,7 @@ namespace ReversibleTramAI
 {
     public class Mod : IUserMod
     {
-        public const string version = "v0.3";
+        public const string version = "v0.3.1";
         public string Name => "Reversible Tram AI " + version;
         public string Description
         {
@@ -26,4 +26,16 @@ namespace ReversibleTramAI
         }
 
     }
+
+    /// This mod uses harmony prefix to skip the following methods in the original TramBaseAI:
+    /// 
+    /// public override void SimulationStep(ushort vehicleID, ref Vehicle data, Vector3 physicsLodRefPos)
+    /// 
+    /// public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
+    /// 
+    /// protected void UpdatePathTargetPositions(ushort vehicleID, ref Vehicle vehicleData, Vector3 refPos1, Vector3 refPos2, ushort leaderID, ref Vehicle leaderData, ref int index, int max1, int max2, float minSqrDistanceA, float minSqrDistanceB)
+    /// 
+    /// public override void FrameDataUpdated(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData)
+    /// 
+    /// private static void ResetTargets(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, bool pushPathPos)
 }

@@ -1,12 +1,12 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 
-
 namespace ReversibleTramAI
 {
     [HarmonyPatch(typeof(TramBaseAI), "FrameDataUpdated")]
     public static class FrameDataUpdatedPatch
     {
+        [HarmonyPriority(Priority.High)]
         public static bool Prefix(ref VehicleInfo ___m_info, ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData)
         {
             Vector3 vector = frameData.m_position + frameData.m_velocity * 0.5f;
