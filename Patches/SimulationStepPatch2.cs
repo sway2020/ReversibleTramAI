@@ -4,19 +4,19 @@ using System.Reflection;
 using System;
 using ColossalFramework;
 using ColossalFramework.Math;
-
+using System.Collections.Generic;
+using System.Reflection.Emit;
 
 namespace ReversibleTramAI
 {
     [HarmonyPatch]
     public static class SimulationStepPatch2
     {
-
         private delegate void TargetDelegate(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics);
 
         public static MethodBase TargetMethod() => Patcher.DeclaredMethod<TargetDelegate>(typeof(TramBaseAI), nameof(TramBaseAI.SimulationStep));
 
-        public static bool Prefix(VehicleAI __instance, ref VehicleInfo ___m_info, ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
+        public static bool Prefix(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics, ref VehicleInfo ___m_info)
         {
             bool reversedFlag = (leaderData.m_flags & Vehicle.Flags.Reversed) != 0;
             ushort leadingVehicle = ((!reversedFlag) ? vehicleData.m_leadingVehicle : vehicleData.m_trailingVehicle);
@@ -102,7 +102,7 @@ namespace ReversibleTramAI
                     int index = -1;
 
                     //tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, 0, ref leaderData, ref index, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f);
-                    UpdatePathTargetPositions(tramBaseAI, ref ___m_info, vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, 0, ref leaderData, ref index, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f);
+                    UpdatePathTargetPositions(tramBaseAI, vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, 0, ref leaderData, ref index, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f, ref ___m_info);
 
                     num2 = 0f;
                 }
@@ -116,7 +116,7 @@ namespace ReversibleTramAI
                     if (vehicleData.m_path != 0 && (leaderData.m_flags & Vehicle.Flags.WaitingPath) == 0)
                     {
                         //tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, position, vector, 0, ref leaderData, ref i, 1, 2, num9, minSqrDistanceB);
-                        UpdatePathTargetPositions(tramBaseAI, ref ___m_info, vehicleID, ref vehicleData, position, vector, 0, ref leaderData, ref i, 1, 2, num9, minSqrDistanceB);
+                        UpdatePathTargetPositions(tramBaseAI, vehicleID, ref vehicleData, position, vector, 0, ref leaderData, ref i, 1, 2, num9, minSqrDistanceB, ref ___m_info);
                     }
                     for (; i < 4; i++)
                     {
@@ -214,7 +214,7 @@ namespace ReversibleTramAI
                     int index2 = -1;
                     
                     //tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, leaderID, ref leaderData, ref index2, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f);
-                    UpdatePathTargetPositions(tramBaseAI, ref ___m_info, vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, leaderID, ref leaderData, ref index2, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f);
+                    UpdatePathTargetPositions(tramBaseAI, vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, leaderID, ref leaderData, ref index2, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f, ref ___m_info);
 
                     num2 = 0f;
                 }
@@ -225,7 +225,7 @@ namespace ReversibleTramAI
                     if (vehicleData.m_path != 0)
                     {
                         //tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, position, vector, leaderID, ref leaderData, ref j, 1, 4, num15, minSqrDistanceB2);
-                        UpdatePathTargetPositions(tramBaseAI, ref ___m_info, vehicleID, ref vehicleData, position, vector, leaderID, ref leaderData, ref j, 1, 4, num15, minSqrDistanceB2);
+                        UpdatePathTargetPositions(tramBaseAI, vehicleID, ref vehicleData, position, vector, leaderID, ref leaderData, ref j, 1, 4, num15, minSqrDistanceB2, ref ___m_info);
                     }
                     if (j < 4)
                     {
@@ -271,7 +271,7 @@ namespace ReversibleTramAI
                     }
                 }
                 //float maxSpeed = (((leaderData.m_flags & Vehicle.Flags.Stopped) == 0) ? Mathf.Min(vehicleData.m_targetPos1.w, GetMaxSpeed(leaderID, ref leaderData)) : 0f);
-                float maxSpeed = (((leaderData.m_flags & Vehicle.Flags.Stopped) == 0) ? Mathf.Min(vehicleData.m_targetPos1.w, GetMaxSpeed(leaderID, ref leaderData)) : 0f);
+                float maxSpeed = (((leaderData.m_flags & Vehicle.Flags.Stopped) == 0) ? Mathf.Min(vehicleData.m_targetPos1.w, GetMaxSpeedStub(leaderID, ref leaderData)) : 0f);
 
                 vector3 = quaternion * vector3;
                 if (reversedFlag)
@@ -331,7 +331,7 @@ namespace ReversibleTramAI
                                         j = -1;
 
                                         //tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, vehicleData.m_targetPos0, vehicleData.m_targetPos1, leaderID, ref leaderData, ref j, 0, 0, Vector3.SqrMagnitude(vehicleData.m_targetPos1 - vehicleData.m_targetPos0) + 1f, 1f);
-                                        UpdatePathTargetPositions(tramBaseAI, ref ___m_info, vehicleID, ref vehicleData, vehicleData.m_targetPos0, vehicleData.m_targetPos1, leaderID, ref leaderData, ref j, 0, 0, Vector3.SqrMagnitude(vehicleData.m_targetPos1 - vehicleData.m_targetPos0) + 1f, 1f);
+                                        UpdatePathTargetPositions(tramBaseAI, vehicleID, ref vehicleData, vehicleData.m_targetPos0, vehicleData.m_targetPos1, leaderID, ref leaderData, ref j, 0, 0, Vector3.SqrMagnitude(vehicleData.m_targetPos1 - vehicleData.m_targetPos0) + 1f, 1f, ref ___m_info);
                                     }
                                 }
                                 else
@@ -339,7 +339,7 @@ namespace ReversibleTramAI
                                     j = -1;
 
                                     //tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, leaderID, ref leaderData, ref j, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f);
-                                    UpdatePathTargetPositions(tramBaseAI, ref ___m_info, vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, leaderID, ref leaderData, ref j, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f);
+                                    UpdatePathTargetPositions(tramBaseAI, vehicleID, ref vehicleData, vehicleData.m_targetPos0, position, leaderID, ref leaderData, ref j, 0, 0, Vector3.SqrMagnitude(position - (Vector3)vehicleData.m_targetPos0) + 1f, 1f, ref ___m_info);
 
                                     vehicleData.m_targetPos1 = vector;
                                     v.z = 0f;
@@ -357,19 +357,19 @@ namespace ReversibleTramAI
                         }
                         
                         //maxSpeed = Mathf.Min(maxSpeed, CalculateTargetSpeed(vehicleID, ref vehicleData, 1000f, num18));
-                        maxSpeed = Mathf.Min(maxSpeed, CalculateTargetSpeedReversePatch.CalculateTargetSpeed(__instance, vehicleID, ref vehicleData, 1000f, num18));
+                        //maxSpeed = Mathf.Min(maxSpeed, CalculateTargetSpeedReversePatch.CalculateTargetSpeed(__instance, vehicleID, ref vehicleData, 1000f, num18));
+                        maxSpeed = Mathf.Min(maxSpeed, CalculateTargetSpeedStub(__instance, vehicleID, ref vehicleData, 1000f, num18));
+
 
                         float num19 = len;
 
                         //maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeed(num19, vehicleData.m_targetPos2.w, braking));
-                        maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeed(num19, vehicleData.m_targetPos2.w, braking));
-
+                        maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeedStub(num19, vehicleData.m_targetPos2.w, braking));
 
                         num19 += VectorUtils.LengthXZ(vehicleData.m_targetPos2 - vehicleData.m_targetPos1);
 
                         //maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeed(num19, vehicleData.m_targetPos3.w, braking));
-                        maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeed(num19, vehicleData.m_targetPos3.w, braking));
-
+                        maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeedStub(num19, vehicleData.m_targetPos3.w, braking));
 
 
                         num19 += VectorUtils.LengthXZ(vehicleData.m_targetPos3 - vehicleData.m_targetPos2);
@@ -382,7 +382,7 @@ namespace ReversibleTramAI
                         }
 
                         //maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeed(num19, 0f, braking));
-                        maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeed(num19, 0f, braking));
+                        maxSpeed = Mathf.Min(maxSpeed, CalculateMaxSpeedStub(num19, 0f, braking));
 
                         CarAI.CheckOtherVehicles(vehicleID, ref vehicleData, ref frameData, ref maxSpeed, ref blocked, ref collisionPush, num12, braking * 0.9f, lodPhysics);
 
@@ -506,42 +506,31 @@ namespace ReversibleTramAI
             }
         }
 
-        /// <summary>
-        /// Taken from vanilla tramBaseAI, unchanged
-        /// </summary>
-        private static float GetMaxSpeed(ushort leaderID, ref Vehicle leaderData)
-        {
-            float num = 1000000f;
-            VehicleManager instance = Singleton<VehicleManager>.instance;
-            ushort num2 = leaderID;
-            int num3 = 0;
-            while (num2 != 0)
-            {
-                num = Mathf.Min(num, instance.m_vehicles.m_buffer[num2].m_targetPos0.w);
-                num = Mathf.Min(num, instance.m_vehicles.m_buffer[num2].m_targetPos1.w);
-                num2 = instance.m_vehicles.m_buffer[num2].m_trailingVehicle;
-                if (++num3 > 16384)
-                {
-                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
-                    break;
-                }
-            }
-            return num;
-        }
+        ///// <summary>
+        ///// Taken from vanilla tramBaseAI, unchanged
+        ///// </summary>
+        //private static float GetMaxSpeed(ushort leaderID, ref Vehicle leaderData)
+        //{
+        //    float num = 1000000f;
+        //    VehicleManager instance = Singleton<VehicleManager>.instance;
+        //    ushort num2 = leaderID;
+        //    int num3 = 0;
+        //    while (num2 != 0)
+        //    {
+        //        num = Mathf.Min(num, instance.m_vehicles.m_buffer[num2].m_targetPos0.w);
+        //        num = Mathf.Min(num, instance.m_vehicles.m_buffer[num2].m_targetPos1.w);
+        //        num2 = instance.m_vehicles.m_buffer[num2].m_trailingVehicle;
+        //        if (++num3 > 16384)
+        //        {
+        //            CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+        //            break;
+        //        }
+        //    }
+        //    return num;
+        //}
 
         /// <summary>
-        /// Taken from vanilla tramBaseAI, unchanged
-        /// </summary>
-        private static float CalculateMaxSpeed(float targetDistance, float targetSpeed, float maxBraking)
-        {
-            float num = 0.5f * maxBraking;
-            float num2 = num + targetSpeed;
-            return Mathf.Sqrt(Mathf.Max(0f, num2 * num2 + 2f * targetDistance * maxBraking)) - num;
-        }
-
-
-        /// <summary>
-        /// Taken from vanilla tramBaseAI, unchanged
+        /// Taken from vanilla tramBaseAI, slightly unchanged
         /// </summary>
         private static void ResetTargets(ushort vehicleID, ref VehicleInfo ___m_info, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, bool pushPathPos)
         {
@@ -600,11 +589,11 @@ namespace ReversibleTramAI
                 int index = 0;
 
                 //tramBaseAI.UpdatePathTargetPositions(vehicleID, ref vehicleData, position2, position, 0, ref leaderData, ref index, 1, 4, 4f, 1f);
-                UpdatePathTargetPositions(tramBaseAI, ref ___m_info, vehicleID, ref vehicleData, position2, position, 0, ref leaderData, ref index, 1, 4, 4f, 1f);
+                UpdatePathTargetPositions(tramBaseAI, vehicleID, ref vehicleData, position2, position, 0, ref leaderData, ref index, 1, 4, 4f, 1f, ref ___m_info);
             }
         }
 
-        public static bool UpdatePathTargetPositions(VehicleAI __instance, ref VehicleInfo ___m_info, ushort vehicleID, ref Vehicle vehicleData, Vector3 refPos1, Vector3 refPos2, ushort leaderID, ref Vehicle leaderData, ref int index, int max1, int max2, float minSqrDistanceA, float minSqrDistanceB)
+        public static bool UpdatePathTargetPositions(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, Vector3 refPos1, Vector3 refPos2, ushort leaderID, ref Vehicle leaderData, ref int index, int max1, int max2, float minSqrDistanceA, float minSqrDistanceB, ref VehicleInfo ___m_info)
         {
             PathManager instance = Singleton<PathManager>.instance;
             NetManager instance2 = Singleton<NetManager>.instance;
@@ -625,14 +614,16 @@ namespace ReversibleTramAI
                 if (!Singleton<PathManager>.instance.m_pathUnits.m_buffer[num3].CalculatePathPositionOffset(b >> 1, targetPos, out offset))
                 {
                     //InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
-                    InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    //InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    InvalidPathStub(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
                     return false;
                 }
             }
             if (!instance.m_pathUnits.m_buffer[num3].GetPosition(b >> 1, out var position))
             {
                 //InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
-                InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                //InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                InvalidPathStub(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
 
                 return false;
             }
@@ -662,7 +653,8 @@ namespace ReversibleTramAI
                             }
                         }
                         //CalculateSegmentPosition(vehicleID, ref vehicleData, position, num4, offset, out var pos, out var _, out var maxSpeed);
-                        CalculateSegmentPositionReversePatch1.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position, num4, offset, out var pos, out var _, out var maxSpeed);
+                        //CalculateSegmentPositionReversePatch1.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position, num4, offset, out var pos, out var _, out var maxSpeed);
+                        CalculateSegmentPositionStub1(__instance, vehicleID, ref vehicleData, position, num4, offset, out var pos, out var _, out var maxSpeed);
 
                         targetPos.Set(pos.x, pos.y, pos.z, Mathf.Min(targetPos.w, maxSpeed));
                         float sqrMagnitude = (pos - refPos1).sqrMagnitude;
@@ -725,7 +717,8 @@ namespace ReversibleTramAI
                 if (!instance.m_pathUnits.m_buffer[num8].GetPosition(num7, out var position2))
                 {
                     //InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
-                    InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    //InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    InvalidPathStub(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
 
                     break;
                 }
@@ -733,7 +726,8 @@ namespace ReversibleTramAI
                 if (info.m_lanes.Length <= position2.m_lane)
                 {
                     //InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
-                    InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    //InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    InvalidPathStub(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
 
                     break;
                 }
@@ -742,7 +736,8 @@ namespace ReversibleTramAI
                 if (lane.m_laneType != NetInfo.LaneType.Vehicle)
                 {
                     //InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
-                    InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    //InvalidPathReversePatch.InvalidPath(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
+                    InvalidPathStub(__instance, vehicleID, ref vehicleData, leaderID, ref leaderData);
 
                     break;
                 }
@@ -757,7 +752,8 @@ namespace ReversibleTramAI
                     Bezier3 bezier = default(Bezier3);
 
                     //CalculateSegmentPosition(vehicleID, ref vehicleData, position, num4, position.m_offset, out bezier.a, out var dir2, out var _);
-                    CalculateSegmentPositionReversePatch1.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position, num4, position.m_offset, out bezier.a, out var dir2, out var _);
+                    //CalculateSegmentPositionReversePatch1.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position, num4, position.m_offset, out bezier.a, out var dir2, out var _);
+                    CalculateSegmentPositionStub1(__instance, vehicleID, ref vehicleData, position, num4, position.m_offset, out bezier.a, out var dir2, out var _);
 
                     // NON-STOCK CODE START. Code in TrainAI but not in TramBaseAI
 
@@ -776,12 +772,14 @@ namespace ReversibleTramAI
                             position3 = default(PathUnit.Position);
                         }
                         //CalculateSegmentPosition(vehicleID, ref vehicleData, position3, position2, laneID, offset2, position, num4, position.m_offset, index, out bezier.d, out dir3, out maxSpeed3);
-                        CalculateSegmentPositionReversePatch2.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position3, position2, laneID, offset2, position, num4, position.m_offset, index, out bezier.d, out dir3, out maxSpeed3);
+                        //CalculateSegmentPositionReversePatch2.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position3, position2, laneID, offset2, position, num4, position.m_offset, index, out bezier.d, out dir3, out maxSpeed3);
+                        CalculateSegmentPositionStub2(__instance, vehicleID, ref vehicleData, position3, position2, laneID, offset2, position, num4, position.m_offset, index, out bezier.d, out dir3, out maxSpeed3);
                     }
                     else
                     {
                         //CalculateSegmentPosition(vehicleID, ref vehicleData, position2, laneID, offset2, out bezier.d, out dir3, out maxSpeed3);
-                        CalculateSegmentPositionReversePatch1.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position2, laneID, offset2, out bezier.d, out dir3, out maxSpeed3);
+                        //CalculateSegmentPositionReversePatch1.CalculateSegmentPosition(__instance, vehicleID, ref vehicleData, position2, laneID, offset2, out bezier.d, out dir3, out maxSpeed3);
+                        CalculateSegmentPositionStub1(__instance, vehicleID, ref vehicleData, position2, laneID, offset2, out bezier.d, out dir3, out maxSpeed3);
                     }
                     if (position.m_offset == 0)
                     {
@@ -840,7 +838,8 @@ namespace ReversibleTramAI
                             num10 /= distance;
                         }
                         //maxSpeed3 = Mathf.Min(maxSpeed3, CalculateTargetSpeed(vehicleID, ref vehicleData, 1000f, num10));
-                        maxSpeed3 = Mathf.Min(maxSpeed3, CalculateTargetSpeedReversePatch.CalculateTargetSpeed(__instance, vehicleID, ref vehicleData, 1000f, num10));
+                        //maxSpeed3 = Mathf.Min(maxSpeed3, CalculateTargetSpeedReversePatch.CalculateTargetSpeed(__instance, vehicleID, ref vehicleData, 1000f, num10));
+                        maxSpeed3 = Mathf.Min(maxSpeed3, CalculateTargetSpeedStub(__instance, vehicleID, ref vehicleData, 1000f, num10));
 
                         while (offset < byte.MaxValue)
                         {
@@ -860,7 +859,8 @@ namespace ReversibleTramAI
                                 if (num9 != 0)
                                 {
                                     //UpdateNodeTargetPos(vehicleID, ref vehicleData, num9, ref instance2.m_nodes.m_buffer[num9], ref targetPos, index);
-                                    UpdateNodeTargetPosReversePatch.UpdateNodeTargetPos(__instance, vehicleID, ref vehicleData, num9, ref instance2.m_nodes.m_buffer[num9], ref targetPos, index);
+                                    //UpdateNodeTargetPosReversePatch.UpdateNodeTargetPos(__instance, vehicleID, ref vehicleData, num9, ref instance2.m_nodes.m_buffer[num9], ref targetPos, index);
+                                    UpdateNodeTargetPosStub(__instance, vehicleID, ref vehicleData, num9, ref instance2.m_nodes.m_buffer[num9], ref targetPos, index);
                                 }
                                 vehicleData.SetTargetPos(index++, targetPos);
                                 if (index < max1)
@@ -900,7 +900,8 @@ namespace ReversibleTramAI
                     if (num7 >= instance.m_pathUnits.m_buffer[num8].m_positionCount - 1 && instance.m_pathUnits.m_buffer[num8].m_nextPathUnit == 0 && leaderID != 0)
                     {
                         //ArrivingToDestination(leaderID, ref leaderData);
-                        ArrivingToDestinationReversePatch.ArrivingToDestination(__instance, leaderID, ref leaderData);
+                        //ArrivingToDestinationReversePatch.ArrivingToDestination(__instance, leaderID, ref leaderData);
+                        ArrivingToDestinationStub(__instance, leaderID, ref leaderData);
                     }
                 }
                 num3 = num8;
@@ -950,5 +951,219 @@ namespace ReversibleTramAI
 
             //
         }
+
+        public static void InvalidPathStub(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.InvalidPathStub - Harmony transpiler not applied");
+        }
+
+        public static void ArrivingToDestinationStub(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.ArrivingToDestinationStub - Harmony transpiler not applied");
+        }
+
+        public static float CalculateTargetSpeedStub(VehicleAI __instance, ushort vehicleID, ref Vehicle data, float speedLimit, float curve)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.CalculateTargetSpeedStub - Harmony transpiler not applied");
+        }
+
+        public static void UpdateNodeTargetPosStub(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, ushort nodeID, ref NetNode nodeData, ref Vector4 targetPos, int index)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.UpdateNodeTargetPosStub - Harmony transpiler not applied");
+        }
+
+        public static void CalculateSegmentPositionStub1(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position position, uint laneID, byte offset, out Vector3 pos, out Vector3 dir, out float maxSpeed)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.CalculateSegmentPositionStub1 - Harmony transpiler not applied");
+        }
+
+        public static void CalculateSegmentPositionStub2(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position nextPosition, PathUnit.Position position, uint laneID, byte offset, PathUnit.Position prevPos, uint prevLaneID, byte prevOffset, int index, out Vector3 pos, out Vector3 dir, out float maxSpeed)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.CalculateSegmentPositionStub2 - Harmony transpiler not applied");
+        }
+
+        public static float CalculateMaxSpeedStub(float targetDistance, float targetSpeed, float maxBraking)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.CalculateMaxSpeedStub - Harmony transpiler not applied");
+        }
+
+        public static float GetMaxSpeedStub(ushort leaderID, ref Vehicle leaderData)
+        {
+            throw new NotImplementedException("SimulationStepPatch2.GetMaxSpeedStub - Harmony transpiler not applied");
+        }
+    }
+
+    [HarmonyPatch(typeof(SimulationStepPatch2), nameof(SimulationStepPatch2.UpdatePathTargetPositions))]
+    public static class UpdatePathTargetPositionsTranspiler
+    {
+        private delegate void InvalidPathStubDelegate(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData);
+        private static MethodBase InvalidPathStubMethod() => Patcher.DeclaredMethod<InvalidPathStubDelegate>(typeof(SimulationStepPatch2), "InvalidPathStub");
+
+        private delegate void InvalidPathDelegate(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData);
+        private static MethodBase InvalidPathMethod() => Patcher.DeclaredMethod<InvalidPathDelegate>(typeof(VehicleAI), "InvalidPath");
+
+
+        private delegate void ArrivingToDestinationStubDelegate(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData);
+        private static MethodBase ArrivingToDestinationStubMethod() => Patcher.DeclaredMethod<ArrivingToDestinationStubDelegate>(typeof(SimulationStepPatch2), "ArrivingToDestinationStub");
+
+        private delegate void ArrivingToDestinationDelegate(ushort vehicleID, ref Vehicle vehicleData);
+        private static MethodBase ArrivingToDestinationMethod() => Patcher.DeclaredMethod<ArrivingToDestinationDelegate>(typeof(VehicleAI), "ArrivingToDestination");
+
+
+        private delegate void CalculateTargetSpeedStubDelegate(VehicleAI __instance, ushort vehicleID, ref Vehicle data, float speedLimit, float curve);
+        private static MethodBase CalculateTargetSpeedStubMethod() => Patcher.DeclaredMethod<CalculateTargetSpeedStubDelegate>(typeof(SimulationStepPatch2), "CalculateTargetSpeedStub");
+
+        private delegate void CalculateTargetSpeedDelegate(ushort vehicleID, ref Vehicle data, float speedLimit, float curve);
+        private static MethodBase CalculateTargetSpeedMethod() => Patcher.DeclaredMethod<CalculateTargetSpeedDelegate>(typeof(VehicleAI), "CalculateTargetSpeed");
+
+
+        private delegate void UpdateNodeTargetPosStubDelegate(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, ushort nodeID, ref NetNode nodeData, ref Vector4 targetPos, int index);
+        private static MethodBase UpdateNodeTargetPosStubMethod() => Patcher.DeclaredMethod<UpdateNodeTargetPosStubDelegate>(typeof(SimulationStepPatch2), "UpdateNodeTargetPosStub");
+
+        private delegate void UpdateNodeTargetPosDelegate(ushort vehicleID, ref Vehicle vehicleData, ushort nodeID, ref NetNode nodeData, ref Vector4 targetPos, int index);
+        private static MethodBase UpdateNodeTargetPosMethod() => Patcher.DeclaredMethod<UpdateNodeTargetPosDelegate>(typeof(VehicleAI), "UpdateNodeTargetPos");
+
+
+        private delegate void CalculateSegmentPositionStub1Delegate(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position position, uint laneID, byte offset, out Vector3 pos, out Vector3 dir, out float maxSpeed);
+        private static MethodBase CalculateSegmentPositionStub1Method() => Patcher.DeclaredMethod<CalculateSegmentPositionStub1Delegate>(typeof(SimulationStepPatch2), "CalculateSegmentPositionStub1");
+
+        private delegate void CalculateSegmentPosition1Delegate(ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position position, uint laneID, byte offset, out Vector3 pos, out Vector3 dir, out float maxSpeed);
+        private static MethodBase CalculateSegmentPosition1Method() => Patcher.DeclaredMethod<CalculateSegmentPosition1Delegate>(typeof(TramBaseAI), "CalculateSegmentPosition");
+
+
+        private delegate void CalculateSegmentPositionStub2Delegate(VehicleAI __instance, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position nextPosition, PathUnit.Position position, uint laneID, byte offset, PathUnit.Position prevPos, uint prevLaneID, byte prevOffset, int index, out Vector3 pos, out Vector3 dir, out float maxSpeed);
+        private static MethodBase CalculateSegmentPositionStub2Method() => Patcher.DeclaredMethod<CalculateSegmentPositionStub2Delegate>(typeof(SimulationStepPatch2), "CalculateSegmentPositionStub2");
+
+        private delegate void CalculateSegmentPosition2Delegate(ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position nextPosition, PathUnit.Position position, uint laneID, byte offset, PathUnit.Position prevPos, uint prevLaneID, byte prevOffset, int index, out Vector3 pos, out Vector3 dir, out float maxSpeed);
+        private static MethodBase CalculateSegmentPosition2Method() => Patcher.DeclaredMethod<CalculateSegmentPosition2Delegate>(typeof(TramBaseAI), "CalculateSegmentPosition");
+
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> Transpiler(ILGenerator il, IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> codes = Patcher.ToCodeList(instructions);
+
+            CodeInstruction invalidPathStubInstruction = new CodeInstruction(OpCodes.Call, InvalidPathStubMethod());
+            CodeInstruction invalidPathInstruction = new CodeInstruction(OpCodes.Callvirt, InvalidPathMethod());
+
+            CodeInstruction arrivingToDestinationStubInstruction = new CodeInstruction(OpCodes.Call, ArrivingToDestinationStubMethod());
+            CodeInstruction arrivingToDestinationInstruction = new CodeInstruction(OpCodes.Callvirt, ArrivingToDestinationMethod());
+
+            CodeInstruction calculateTargetSpeedStubInstruction = new CodeInstruction(OpCodes.Call, CalculateTargetSpeedStubMethod());
+            CodeInstruction calculateTargetSpeedInstruction = new CodeInstruction(OpCodes.Callvirt, CalculateTargetSpeedMethod());
+
+            CodeInstruction updateNodeTargetPosStubInstruction = new CodeInstruction(OpCodes.Call, UpdateNodeTargetPosStubMethod());
+            CodeInstruction updateNodeTargetPosInstruction = new CodeInstruction(OpCodes.Callvirt, UpdateNodeTargetPosMethod());
+
+            CodeInstruction calculateSegmentPositionStub1Instruction = new CodeInstruction(OpCodes.Call, CalculateSegmentPositionStub1Method());
+            CodeInstruction calculateSegmentPosition1Instruction = new CodeInstruction(OpCodes.Callvirt, CalculateSegmentPosition1Method());
+
+            CodeInstruction calculateSegmentPositionStub2Instruction = new CodeInstruction(OpCodes.Call, CalculateSegmentPositionStub2Method());
+            CodeInstruction calculateSegmentPosition2Instruction = new CodeInstruction(OpCodes.Callvirt, CalculateSegmentPosition2Method());
+            
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode != OpCodes.Call) continue;
+
+                if (codes[i].opcode == invalidPathStubInstruction.opcode && codes[i].operand == invalidPathStubInstruction.operand)
+                {
+                    codes[i].opcode = invalidPathInstruction.opcode;
+                    codes[i].operand = invalidPathInstruction.operand;
+                }
+                else if (codes[i].opcode == arrivingToDestinationStubInstruction.opcode && codes[i].operand == arrivingToDestinationStubInstruction.operand)
+                {
+                    codes[i].opcode = arrivingToDestinationInstruction.opcode;
+                    codes[i].operand = arrivingToDestinationInstruction.operand;
+                }
+                else if (codes[i].opcode == calculateTargetSpeedStubInstruction.opcode && codes[i].operand == calculateTargetSpeedStubInstruction.operand)
+                {
+                    codes[i].opcode = calculateTargetSpeedInstruction.opcode;
+                    codes[i].operand = calculateTargetSpeedInstruction.operand;
+                }
+                else if (codes[i].opcode == updateNodeTargetPosStubInstruction.opcode && codes[i].operand == updateNodeTargetPosStubInstruction.operand)
+                {
+                    codes[i].opcode = updateNodeTargetPosInstruction.opcode;
+                    codes[i].operand = updateNodeTargetPosInstruction.operand;
+                }
+                else if (codes[i].opcode == calculateSegmentPositionStub1Instruction.opcode && codes[i].operand == calculateSegmentPositionStub1Instruction.operand)
+                {
+                    codes[i].opcode = calculateSegmentPosition1Instruction.opcode;
+                    codes[i].operand = calculateSegmentPosition1Instruction.operand;
+                }
+                else if (codes[i].opcode == calculateSegmentPositionStub2Instruction.opcode && codes[i].operand == calculateSegmentPositionStub2Instruction.operand)
+                {
+                    codes[i].opcode = calculateSegmentPosition2Instruction.opcode;
+                    codes[i].operand = calculateSegmentPosition2Instruction.operand;
+                }
+                
+            }
+
+            return codes;
+        }
+
+    }
+
+    [HarmonyPatch(typeof(SimulationStepPatch2), nameof(SimulationStepPatch2.Prefix))]
+    public static class SimulationStepPatch2Transpiler
+    {
+        private delegate void CalculateTargetSpeedStubDelegate(VehicleAI __instance, ushort vehicleID, ref Vehicle data, float speedLimit, float curve);
+        private static MethodBase CalculateTargetSpeedStubMethod() => Patcher.DeclaredMethod<CalculateTargetSpeedStubDelegate>(typeof(SimulationStepPatch2), "CalculateTargetSpeedStub");
+
+        private delegate void CalculateTargetSpeedDelegate(ushort vehicleID, ref Vehicle data, float speedLimit, float curve);
+        private static MethodBase CalculateTargetSpeedMethod() => Patcher.DeclaredMethod<CalculateTargetSpeedDelegate>(typeof(VehicleAI), "CalculateTargetSpeed");
+
+
+        private delegate void CalculateMaxSpeedStubDelegate(float targetDistance, float targetSpeed, float maxBraking);
+        private static MethodBase CalculateMaxSpeedStubMethod() => Patcher.DeclaredMethod<CalculateMaxSpeedStubDelegate>(typeof(SimulationStepPatch2), "CalculateMaxSpeedStub");
+
+        private delegate void CalculateMaxSpeedDelegate(float targetDistance, float targetSpeed, float maxBraking);
+        private static MethodBase CalculateMaxSpeedMethod() => Patcher.DeclaredMethod<CalculateMaxSpeedDelegate>(typeof(TramBaseAI), "CalculateMaxSpeed");
+
+
+        private delegate void GetMaxSpeedStubDelegate(ushort leaderID, ref Vehicle leaderData);
+        private static MethodBase GetMaxSpeedStubMethod() => Patcher.DeclaredMethod<GetMaxSpeedStubDelegate>(typeof(SimulationStepPatch2), "GetMaxSpeedStub");
+
+        private delegate void GetMaxSpeedDelegate(ushort leaderID, ref Vehicle leaderData);
+        private static MethodBase GetMaxSpeedMethod() => Patcher.DeclaredMethod<GetMaxSpeedDelegate>(typeof(TramBaseAI), "GetMaxSpeed");
+
+
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> Transpiler(ILGenerator il, IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> codes = Patcher.ToCodeList(instructions);
+
+            CodeInstruction calculateTargetSpeedStubInstruction = new CodeInstruction(OpCodes.Call, CalculateTargetSpeedStubMethod());
+            CodeInstruction calculateTargetSpeedInstruction = new CodeInstruction(OpCodes.Callvirt, CalculateTargetSpeedMethod());
+
+            CodeInstruction calculateMaxSpeedStubInstruction = new CodeInstruction(OpCodes.Call, CalculateMaxSpeedStubMethod());
+            CodeInstruction calculateMaxSpeedInstruction = new CodeInstruction(OpCodes.Call, CalculateMaxSpeedMethod());
+
+            CodeInstruction getMaxSpeedStubInstruction = new CodeInstruction(OpCodes.Call, GetMaxSpeedStubMethod());
+            CodeInstruction getMaxSpeedInstruction = new CodeInstruction(OpCodes.Call, GetMaxSpeedMethod());
+
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode != OpCodes.Call) continue;
+
+                if (codes[i].opcode == calculateTargetSpeedStubInstruction.opcode && codes[i].operand == calculateTargetSpeedStubInstruction.operand)
+                {
+                    codes[i].opcode = calculateTargetSpeedInstruction.opcode;
+                    codes[i].operand = calculateTargetSpeedInstruction.operand;
+                }
+                else if (codes[i].opcode == calculateMaxSpeedStubInstruction.opcode && codes[i].operand == calculateMaxSpeedStubInstruction.operand)
+                {
+                    codes[i].opcode = calculateMaxSpeedInstruction.opcode;
+                    codes[i].operand = calculateMaxSpeedInstruction.operand;
+                }
+                else if (codes[i].opcode == getMaxSpeedStubInstruction.opcode && codes[i].operand == getMaxSpeedStubInstruction.operand)
+                {
+                    codes[i].opcode = getMaxSpeedInstruction.opcode;
+                    codes[i].operand = getMaxSpeedInstruction.operand;
+                }
+            }
+
+            return codes;
+        }
+
     }
 }

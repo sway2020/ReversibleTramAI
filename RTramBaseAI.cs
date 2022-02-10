@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+ * Obsolete. Not used anymore
+ */
+
+using System;
 using ColossalFramework;
 using ColossalFramework.Math;
 using UnityEngine;
