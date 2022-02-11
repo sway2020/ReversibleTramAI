@@ -16,6 +16,11 @@ namespace ReversibleTramAI
 
         public static MethodBase TargetMethod() => Patcher.DeclaredMethod<TargetDelegate>(typeof(TramBaseAI), nameof(TramBaseAI.SimulationStep));
 
+        /// <summary>
+        /// 
+        /// This prefix is also Transpiled by TMPE !!!
+        /// 
+        /// </summary>
         public static bool Prefix(VehicleAI __instance, ushort vehicleID, ref Vehicle data, Vector3 physicsLodRefPos, ref VehicleInfo ___m_info)
         {
             if ((data.m_flags & Vehicle.Flags.WaitingPath) != 0)
@@ -94,6 +99,9 @@ namespace ReversibleTramAI
 
             num = flag ? instance.m_vehicles.m_buffer[num].m_leadingVehicle : instance.m_vehicles.m_buffer[num].m_trailingVehicle;
             int num2 = 0;
+
+            uint maxVehicleCount = Singleton<VehicleManager>.instance.m_vehicles.m_size;
+            
             while (num != 0)
             {
                 info = instance.m_vehicles.m_buffer[num].Info;
@@ -103,7 +111,7 @@ namespace ReversibleTramAI
                     return false;
                 }
                 num = flag ? instance.m_vehicles.m_buffer[num].m_leadingVehicle : instance.m_vehicles.m_buffer[num].m_trailingVehicle;
-                if (++num2 > 16384)
+                if (++num2 > maxVehicleCount) //16384)
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                     break;

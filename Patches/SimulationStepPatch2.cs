@@ -492,13 +492,16 @@ namespace ReversibleTramAI
             VehicleManager instance = Singleton<VehicleManager>.instance;
             ushort num = leaderID;
             int num2 = 0;
+
+            uint maxVehicleCount = Singleton<VehicleManager>.instance.m_vehicles.m_size;
+
             while (num != 0)
             {
                 ResetTargets(num, ref ___m_info, ref instance.m_vehicles.m_buffer[num], leaderID, ref leaderData, pushPathPos: true);
 
                 instance.m_vehicles.m_buffer[num].m_flags = (instance.m_vehicles.m_buffer[num].m_flags & ~Vehicle.Flags.Reversed) | (leaderData.m_flags & Vehicle.Flags.Reversed);
                 num = instance.m_vehicles.m_buffer[num].m_trailingVehicle;
-                if (++num2 > 16384)
+                if (++num2 > maxVehicleCount) //16384)
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                     break;
