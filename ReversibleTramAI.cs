@@ -5,7 +5,7 @@ namespace ReversibleTramAI
 {
     public class Mod : IUserMod
     {
-        public const string version = "0.5.1";
+        public const string version = "1.0";
         public string Name => "Reversible Tram AI " + version;
         public string Description
         {

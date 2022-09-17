@@ -6,9 +6,9 @@ namespace ReversibleTramAI
     public static class AddProblemsPatch
     {
         [HarmonyPriority(Priority.High)]
-        public static bool Prefix(ref Notification.Problem problems1, ref Notification.Problem problems2)
+        public static bool Prefix(ref Notification.ProblemStruct problems1, ref Notification.ProblemStruct problems2)
         {
-            if (problems2 == Notification.Problem.TrackNotConnected) return false;
+            if (problems2 == Notification.Problem1.TrackNotConnected) return false;
             return true;
         }
     }
